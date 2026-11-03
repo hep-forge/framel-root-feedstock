@@ -1,4 +1,5 @@
 {% set versions = {
+    "1.0.3": "23ff2583bbfa9ee42db380b14cb838534e316adb",
     "1.0.2": "9e745d27be6c77a754cc2c964f16cdb1d27fd163",
     "1.0.1": "9ed389855f48bb1c488869c9b005cba0f29c8159",
     "1.0.0": "59dbfeb11e9a5765f8d29dc4237c818aaad36bf2",
