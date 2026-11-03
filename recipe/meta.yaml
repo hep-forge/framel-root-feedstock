@@ -27,15 +27,17 @@ build:
 
 requirements:
   build:
-    - {{ compiler('cxx') }} # [linux]
-    - {{ compiler('c') }}   # [linux]
+    # Declared on macOS too: without them CMake takes the system AppleClang
+    # (as escalade and root-plus did before they declared theirs).
+    - {{ compiler('cxx') }}
+    - {{ compiler('c') }}
     - {{ stdlib('c') }}
 
     - clang
     - cmake
     - make
 
-    - cuda-nvcc
+    - cuda-nvcc  # [linux]
 
   host:
     - root-plus
