@@ -12,10 +12,12 @@ cd build
 # (plus toolchain/strip paths) -- omitting it leaves CMAKE_BUILD_TYPE
 # unset (this project's own CMakeLists.txt never defaults it either),
 # producing an unoptimized, unstripped debug-info binary.
-# conda-forge ROOT 6.38's rootcling crashes building C++ modules on macOS
-# (as for root-plus): classic dictionaries there.
+# Classic dictionaries, as for root-plus: on macOS conda-forge ROOT 6.38's
+# rootcling crashes building C++ modules, and wherever ROOT itself has no
+# runtime C++ modules (conda-forge cross-compiles linux-aarch64 with
+# runtime_cxxmodules=OFF: no etc/cling/module.modulemap to build on).
 EXTRA_ARGS=()
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ "$(uname)" == "Darwin" ]] || [[ "$(root-config --has-runtime_cxxmodules)" != "yes" ]]; then
     EXTRA_ARGS+=(-DROOT_RUNTIME_CXXMODULES=OFF)
 fi
 
