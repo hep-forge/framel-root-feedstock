@@ -1,14 +1,19 @@
+# framel-root takes framel's version: framel-root X.Y.Z is built against,
+# and requires, hep-forge's framel X.Y.Z. Each version maps to the commit of
+# the KAGRA ROOT library (git.ligo.org/kagra/libraries-addons/root/framel)
+# it builds; hep-bot adds new framel versions with an empty commit, which
+# builds the newest commit listed. A new KAGRA release on the same framel:
+# set its commit here and raise build_number.
+# Before 8.50.3 framel-root had its own versions (0.1, 1.0.0 - 1.0.3).
 {% set versions = {
-    "1.0.3": "23ff2583bbfa9ee42db380b14cb838534e316adb",
-    "1.0.2": "9e745d27be6c77a754cc2c964f16cdb1d27fd163",
-    "1.0.1": "9ed389855f48bb1c488869c9b005cba0f29c8159",
-    "1.0.0": "59dbfeb11e9a5765f8d29dc4237c818aaad36bf2",
-    "0.1": "29bec103832ea93c37fd68d71e3555c47df26219"
+    "8.50.3": "23ff2583bbfa9ee42db380b14cb838534e316adb"
 } %}
+{% set build_number = 0 %}
 
 {% set version = environ.get('COMMIT_VERSION', None) %}
 {% set version = version or versions.keys()|first %}
 {% set version = version|string %}
+{% set kagra_rev = versions.get(version) or (versions.values()|select|first) %}
 
 package:
   name: {{ environ.get('ANACONDA_PACKAGE', "framel-root")|string|lower }}
@@ -16,9 +21,10 @@ package:
 
 source:
   git_url: "https://git.ligo.org/kagra/libraries-addons/root/framel"
-  git_rev: "{{ version }}"
+  git_rev: "{{ kagra_rev }}"
 
 build:
+  number: {{ build_number }}
   # ADD_ROOT_LIBRARY() (root-plus's shared cmake/Modules/RootFramework.cmake)
   # installs a precompiled Clang module cache (lib/*.pcm) for each library
   # this recipe builds. conda-build's default prefix-relocation does a
@@ -44,11 +50,11 @@ requirements:
 
   host:
     - root-plus
-    - framel
+    - framel {{ version }}.*
 
   run:
     - root-plus
-    - framel
+    - framel {{ version }}.*
 
 about:
   home: "https://git.ligo.org/kagra/libraries-addons/root/framel"
