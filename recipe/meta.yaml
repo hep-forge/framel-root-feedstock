@@ -8,7 +8,7 @@
 {% set versions = {
     "8.50.3": "23ff2583bbfa9ee42db380b14cb838534e316adb"
 } %}
-{% set build_number = 0 %}
+{% set build_number = 1 %}   # 1: rebuilt on framel build 2 (Fr built by hep-forge)
 
 {% set version = environ.get('COMMIT_VERSION', None) %}
 {% set version = version or versions.keys()|first %}
