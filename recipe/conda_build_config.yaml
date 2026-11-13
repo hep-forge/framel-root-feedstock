@@ -32,3 +32,10 @@ libgcc_version:        # [linux]
   - 14.*                     # [linux]
 libstdcxx_version:     # [linux]
   - 14.*                     # [linux]
+
+# The ROOT series behind root-plus (one root-plus per series; root-plus
+# pins conda-forge's root_base exactly, framel-root never names ROOT).
+# framel-root requires the root-plus built on it and is named after it:
+# build string root<series>_<build number>, like the other ROOT packages.
+root:
+  - 6.38

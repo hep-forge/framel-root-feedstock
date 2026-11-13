@@ -1,19 +1,23 @@
-# framel-root takes framel's version: framel-root X.Y.Z is built against,
-# and requires, hep-forge's framel X.Y.Z. Each version maps to the commit of
-# the KAGRA ROOT library (git.ligo.org/kagra/libraries-addons/root/framel)
-# it builds; hep-bot adds new framel versions with an empty commit, which
-# builds the newest commit listed. A new KAGRA release on the same framel:
-# set its commit here and raise build_number.
+# framel-root has no versions of its own: it takes framel's. The feedstock
+# tag names the version (CI passes it as COMMIT_VERSION), and the build
+# requires exactly that framel, so the two always match. hep-bot tags
+# framel-root whenever a new framel is tagged (sources.yaml: follows framel);
+# nothing to edit here for a framel release.
+# source_rev is the commit of the FrameFormat ROOT library built
+# (git.ligo.org/kagra/libraries-addons/root/framel). A new commit there:
+# set it and raise build_number.
 # Before 8.50.3 framel-root had its own versions (0.1, 1.0.0 - 1.0.3).
-{% set versions = {
-    "8.50.3": "23ff2583bbfa9ee42db380b14cb838534e316adb"
-} %}
-{% set build_number = 1 %}   # 1: rebuilt on framel build 2 (Fr built by hep-forge)
+# Plain "#" comments only: the publish workflow's version trimming strips
+# {% %}/{{ }} and yaml-loads the rest, so a Jinja comment block breaks it.
+{% set source_rev = "4db0496610ded8c9d5d0e27dff683d02dbb73afe" %}
+{% set build_number = 2 %}
 
-{% set version = environ.get('COMMIT_VERSION', None) %}
-{% set version = version or versions.keys()|first %}
-{% set version = version|string %}
-{% set kagra_rev = versions.get(version) or (versions.values()|select|first) %}
+# Without a tag (a local build), take whichever framel is there; 0.0.0 is
+# never uploaded.
+{% set version = environ.get('COMMIT_VERSION', None) or "0.0.0" %}
+{% set framel_pin = "framel " ~ version ~ ".*" if version != "0.0.0" else "framel" %}
+{% set root_tag = (root or '')|replace('.', '') %}
+{% set rioplus_pin = "root-plus * *_root" ~ root_tag %}
 
 package:
   name: {{ environ.get('ANACONDA_PACKAGE', "framel-root")|string|lower }}
@@ -21,10 +25,11 @@ package:
 
 source:
   git_url: "https://git.ligo.org/kagra/libraries-addons/root/framel"
-  git_rev: "{{ kagra_rev }}"
+  git_rev: "{{ source_rev }}"
 
 build:
   number: {{ build_number }}
+  string: "root{{ root_tag }}_{{ build_number }}"
   # ADD_ROOT_LIBRARY() (root-plus's shared cmake/Modules/RootFramework.cmake)
   # installs a precompiled Clang module cache (lib/*.pcm) for each library
   # this recipe builds. conda-build's default prefix-relocation does a
@@ -49,12 +54,26 @@ requirements:
     - cuda-nvcc  # [linux]
 
   host:
-    - root-plus
-    - framel {{ version }}.*
+    - {{ rioplus_pin }}
+    - {{ framel_pin }}
 
   run:
-    - root-plus
-    - framel {{ version }}.*
+    - {{ rioplus_pin }}
+    - {{ framel_pin }}
+
+test:
+  source_files:
+    - share/samples/test-1.gwf
+  commands:
+    {% for app in ["FrameCheck", "FrameData", "FrameMerger", "FrameReshape", "FrameSplitter", "FrameTrend", "LsGwf"] %}
+    - test -x "${PREFIX}/bin/{{ app }}"
+    {% endfor %}
+    - test -f "${PREFIX}/lib/libFrameFormat${SHLIB_EXT}"
+    # --help exits 1 (TCli); check it lists the tool's own options
+    - FrameCheck --help 2>&1 | grep -q -- --skip-file-integrity
+    - FrameCheck share/samples/test-1.gwf
+    - LsGwf --toc --non-interactive share/samples/test-1.gwf
+    - root.exe -l -b -q -e 'if (gSystem->Load("libFrameFormat") < 0) gSystem->Exit(1); FrameFormat::TFrameChain c("share/samples/test-1.gwf"); gSystem->Exit(!c.IsOpen());'
 
 about:
   home: "https://git.ligo.org/kagra/libraries-addons/root/framel"
